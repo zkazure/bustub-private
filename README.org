@@ -1,0 +1,16 @@
+#+begin_src sh
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DBUSTUB_SANITIZER=address \
+  -DSTACK_DETAILS_AUTO_DETECT=OFF \
+  -DSTACK_DETAILS_DWARF=OFF \
+  -DSTACK_DETAILS_BACKTRACE_SYMBOL=ON
+
+cmake --build build -j"$(nproc)"
+#+end_src
+
+
+#+begin_src sh
+cmake --build build --target count_min_sketch_test -j"$(nproc)"
+./build/test/count_min_sketch_test
+#+end_src
