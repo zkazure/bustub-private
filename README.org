@@ -1,12 +1,13 @@
 #+begin_src sh
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DBUSTUB_SANITIZER=address \
-  -DSTACK_DETAILS_AUTO_DETECT=OFF \
-  -DSTACK_DETAILS_DWARF=OFF \
-  -DSTACK_DETAILS_BACKTRACE_SYMBOL=ON
+  cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DBUSTUB_SANITIZER=address \
+    -DSTACK_DETAILS_AUTO_DETECT=OFF \
+    -DSTACK_DETAILS_DWARF=OFF \
+    -DSTACK_DETAILS_BACKTRACE_SYMBOL=ON \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
-cmake --build build -j"$(nproc)"
+  cmake --build build -j"$(nproc)"
 #+end_src
 
 
