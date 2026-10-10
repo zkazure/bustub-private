@@ -13,8 +13,8 @@
 #include "primer/count_min_sketch.h"
 
 #include <cstdint>
-#include <cmath>
 #include <limits>
+#include <mutex>
 #include <queue>
 #include <stdexcept>
 #include <string>
@@ -30,14 +30,15 @@ namespace bustub {
  */
 template <typename KeyType>
 CountMinSketch<KeyType>::CountMinSketch(uint32_t width, uint32_t depth) : width_(width), depth_(depth) {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
   if (this->width_ <= 0 || this->depth_ <= 0) {
     throw std::invalid_argument("width_ or depth_ must greater than 0.");
   }
 
-  counts_ = std::make_unique<std::atomic<uint32_t>[]>(this->width_ * this->depth_);
+  std::lock_guard<std::mutex> lock(this->latch_);
+  counts_.resize(this->width_ * this->depth_);
   for (uint32_t i = 0; i < this->width_ * this->depth_; i++) {
-    counts_[i].store(0);
+    counts_[i] = 0;
   }
 
   /** @fall2025 PLEASE DO NOT MODIFY THE FOLLOWING */
@@ -50,14 +51,14 @@ CountMinSketch<KeyType>::CountMinSketch(uint32_t width, uint32_t depth) : width_
 
 template <typename KeyType>
 CountMinSketch<KeyType>::CountMinSketch(CountMinSketch &&other) noexcept : width_(other.width_), depth_(other.depth_) {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
   this->hash_functions_ = std::move(other.hash_functions_);
   this->counts_ = std::move(other.counts_);
 }
 
 template <typename KeyType>
 auto CountMinSketch<KeyType>::operator=(CountMinSketch &&other) noexcept -> CountMinSketch & {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
   this->width_ = std::move(other.width_);
   this->depth_ = std::move(other.depth_);
   this->hash_functions_ = std::move(other.hash_functions_);
@@ -69,9 +70,11 @@ auto CountMinSketch<KeyType>::operator=(CountMinSketch &&other) noexcept -> Coun
 
 template <typename KeyType>
 void CountMinSketch<KeyType>::Insert(const KeyType &item) {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
+  std::lock_guard<std::mutex> lock(this->latch_);
+
   for (uint32_t i = 0; i < depth_; ++i) {
-    counts_[hash_functions_[i](item) + i * width_].fetch_add(1);
+    counts_[hash_functions_[i](item) + i * width_] += 1;
   }
 }
 
@@ -80,14 +83,21 @@ void CountMinSketch<KeyType>::Merge(const CountMinSketch<KeyType> &other) {
   if (width_ != other.width_ || depth_ != other.depth_) {
     throw std::invalid_argument("Incompatible CountMinSketch dimensions for merge.");
   }
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
+  std::lock(this->latch_, other.latch_);
+  std::lock_guard<std::mutex> lock(this->latch_, std::adopt_lock);
+  std::lock_guard<std::mutex> otherlock(other.latch_, std::adopt_lock);
+
   for (uint32_t i = 0; i < this->width_ * this->depth_; ++i) {
-    this->counts_[i].fetch_add(other.counts_[i].load());
+    this->counts_[i] += other.counts_[i];
   }
 }
 
 template <typename KeyType>
 auto CountMinSketch<KeyType>::Count(const KeyType &item) const -> uint32_t {
+  /** @DONE(student) Implement this function! */
+  std::lock_guard<std::mutex> lock(this->latch_);
+
   uint32_t res = std::numeric_limits<uint32_t>::max();
   for (uint32_t i = 0; i < depth_; ++i) {
     uint32_t tmp = counts_[width_ * i + hash_functions_[i](item)];
@@ -98,17 +108,20 @@ auto CountMinSketch<KeyType>::Count(const KeyType &item) const -> uint32_t {
 
 template <typename KeyType>
 void CountMinSketch<KeyType>::Clear() {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
+  std::lock_guard<std::mutex> lock(this->latch_);
+
   for (uint32_t i = 0; i < this->width_ * this->depth_; ++i) {
-    counts_[i].store(0);
+    counts_[i] = 0;
   }
 }
 
 template <typename KeyType>
 auto CountMinSketch<KeyType>::TopK(uint16_t k, const std::vector<KeyType> &candidates)
     -> std::vector<std::pair<KeyType, uint32_t>> {
-  /** @TODO(student) Implement this function! */
+  /** @DONE(student) Implement this function! */
   using CountKey = std::pair<uint32_t, KeyType>;
+  std::lock_guard<std::mutex> lock(this->latch_);
 
   std::priority_queue<CountKey, std::vector<CountKey>> max_heap;
   for (auto &c : candidates) {

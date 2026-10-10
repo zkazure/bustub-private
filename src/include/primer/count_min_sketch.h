@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <mutex>
 
 #include "common/util/hash_util.h"
 
@@ -104,9 +105,10 @@ class CountMinSketch {
     };
   }
 
-  /** @TODO (student) can add their data structures that support count-min sketch operations */
+  /** @DONE (student) can add their data structures that support count-min sketch operations */
  private:
-  std::unique_ptr<std::atomic<uint32_t>[]> counts_;
+  std::vector<uint32_t> counts_;
+  mutable std::mutex latch_;
 };
 
 }  // namespace bustub
