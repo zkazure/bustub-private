@@ -1,3 +1,5 @@
+#+title: README
+
 #+begin_src sh
   cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Debug \
@@ -16,3 +18,9 @@
 cmake --build build --target count_min_sketch_test -j"$(nproc)"
 ./build/test/count_min_sketch_test
 #+end_src
+
+** Project 1
+
+- page size: 8KB (fixed size)
+- https://en.cppreference.com/cpp/container
+- latches
