@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -107,8 +106,8 @@ class CountMinSketch {
 
   /** @DONE (student) can add their data structures that support count-min sketch operations */
  private:
-  std::vector<uint32_t> counts_;
-  mutable std::mutex latch_;
+  /** Per-bucket counters. Each bucket is updated with a relaxed atomic RMW, so no latch is needed. */
+  std::unique_ptr<std::atomic<uint32_t>[]> counts_;
 };
 
 }  // namespace bustub
